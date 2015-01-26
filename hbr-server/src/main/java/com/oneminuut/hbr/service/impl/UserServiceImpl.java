@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
 
 		userDao.saveUser(user);
 	}
-	
+
 	@Override
 	public UserValidationDTO validateUser(User user) {
 		UserValidationDTO userValidationDTO = null;
@@ -54,10 +54,13 @@ public class UserServiceImpl implements UserService {
 			userValidationDTO = new UserValidationDTO();
 			userValidationDTO.setMessage("Email is not present");
 			userValidationDTO.setStatusCode("ERROR_002");
-		} 
+		}
 		return userValidationDTO;
 	}
 
+	public User getUser(long userId) {
+		return userDao.get(userId);
+	}
 
 	public UserDao getUserDao() {
 		return userDao;

@@ -10,5 +10,7 @@ public interface UserService {
 	
 	public void saveUser(RegistrationForm registrationForm);
 	
+	public User getUser(long userId);
+	
 	public UserValidationDTO validateUser(User user);
 }

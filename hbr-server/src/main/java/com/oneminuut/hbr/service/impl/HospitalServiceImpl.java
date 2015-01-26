@@ -1,5 +1,6 @@
 package com.oneminuut.hbr.service.impl;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,12 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.oneminuut.hbr.dao.BedDao;
+import com.oneminuut.hbr.dao.BedReservationDao;
 import com.oneminuut.hbr.dao.HospitalDao;
 import com.oneminuut.hbr.dao.UserDao;
 import com.oneminuut.hbr.dao.domain.Bed;
+import com.oneminuut.hbr.dao.domain.BedReservation;
 import com.oneminuut.hbr.dao.domain.Department;
 import com.oneminuut.hbr.dao.domain.Hospital;
 import com.oneminuut.hbr.dao.domain.Unit;
+import com.oneminuut.hbr.dto.BedDTO;
 import com.oneminuut.hbr.dto.DepartmentDTO;
 import com.oneminuut.hbr.dto.HospitalDTO;
 import com.oneminuut.hbr.dto.UnitDTO;
@@ -83,6 +87,13 @@ public class HospitalServiceImpl implements HospitalService {
 					departmentDTO.getUnits().add(unitDTO);
 					unitDTO.setId(unit.getId());
 					unitDTO.setName(unit.getName());
+					unitDTO.setBeds(new HashSet<BedDTO>());
+					for (Bed bed : unit.getBeds()) {
+						BedDTO bedDTO = new BedDTO();
+						bedDTO.setId(bed.getId());
+						bedDTO.setNumber(bed.getNumber());
+						unitDTO.getBeds().add(bedDTO);
+					}
 				}
 			}
 			hospitalsHashMap.put(new Long(id), hospitalDTO);
@@ -99,6 +110,25 @@ public class HospitalServiceImpl implements HospitalService {
 		return bedDao.getBedsForUnit(id);
 	}
 
+	public List<BedReservation> getReservationsForBed(long id, Date date) {
+		return bedDao.getReservationsForBed(id, date);
+	}
+
+	@Autowired
+	private BedReservationDao bedReservationDao;
+
+	public BedReservation getBedReservationForDate(long id, Date enddate, Date startDate) {
+		return bedReservationDao.getBedReservationForDate(id, enddate, startDate);
+	}
+
+	
+	public void saveBedReservation(BedReservation bedReservation) {
+		bedReservationDao.save(bedReservation);
+	}
+	
+	public Bed getBed(long bedId) {
+		return bedDao.get(bedId);
+	}
 	/*
 	 * @Override public Lesson saveLesson(AddLessonForm addLessonForm, String
 	 * email) { Lesson lesson = new Lesson();

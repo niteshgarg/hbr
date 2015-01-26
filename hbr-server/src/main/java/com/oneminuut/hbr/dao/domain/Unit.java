@@ -2,6 +2,7 @@ package com.oneminuut.hbr.dao.domain;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -41,6 +42,17 @@ public class Unit implements Serializable {
 
 	@Column(name = "deleted", nullable = false, columnDefinition = "tinyint default false")
 	private Boolean deleted = false;
+	
+	@OneToMany(mappedBy="unit")
+	private Set<Bed> beds = new HashSet<>();
+	
+	public Set<Bed> getBeds() {
+		return beds;
+	}
+
+	public void setBeds(Set<Bed> beds) {
+		this.beds = beds;
+	}
 
 	public Boolean getDeleted() {
 		return deleted;

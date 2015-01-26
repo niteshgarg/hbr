@@ -6,6 +6,8 @@ import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -45,6 +47,18 @@ public class BedReservation implements Serializable {
 
 	@Column(name = "deleted", nullable = false, columnDefinition = "tinyint default false")
 	private Boolean deleted = false;
+	
+	@Enumerated(EnumType.ORDINAL)
+	@Column(name = "status", nullable = false)
+	private RESERVATION_STATUS_TYPE status = RESERVATION_STATUS_TYPE.OCCUPIED;
+	
+	public RESERVATION_STATUS_TYPE getStatus() {
+		return status;
+	}
+
+	public void setStatus(RESERVATION_STATUS_TYPE status) {
+		this.status = status;
+	}
 
 	public Boolean getDeleted() {
 		return deleted;

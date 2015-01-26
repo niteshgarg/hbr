@@ -6,9 +6,17 @@ public class BedDTO {
 
 	private String number;
 
-	private Boolean available = true;
-
 	private String status;
+
+	private String yesterdayStatus;
+
+	public String getYesterdayStatus() {
+		return yesterdayStatus;
+	}
+
+	public void setYesterdayStatus(String yesterdayStatus) {
+		this.yesterdayStatus = yesterdayStatus;
+	}
 
 	public String getStatus() {
 		return status;
@@ -32,14 +40,6 @@ public class BedDTO {
 
 	public void setNumber(String number) {
 		this.number = number;
-	}
-
-	public Boolean getAvailable() {
-		return available;
-	}
-
-	public void setAvailable(Boolean available) {
-		this.available = available;
 	}
 
 }

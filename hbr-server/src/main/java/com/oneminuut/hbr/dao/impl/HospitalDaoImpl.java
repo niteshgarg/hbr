@@ -27,8 +27,8 @@ public class HospitalDaoImpl extends GenericDaoImpl<Hospital, Long> implements
 		try {
 
 			session = getSessionFactory().openSession();
-			String queryString = "from Hospital h JOIN FETCH h.departments d JOIN FETCH d.units u"
-					+ " where h.id = :id and h.deleted=:deleted and d.deleted=:deleted and u.deleted=:deleted";
+			String queryString = "from Hospital h JOIN FETCH h.departments d JOIN FETCH d.units u JOIN FETCH u.beds b"
+					+ " where h.id = :id and h.deleted=:deleted and d.deleted=:deleted and u.deleted=:deleted and b.deleted=:deleted";
 			/*
 			 * String queryString =
 			 * "from Hospital h JOIN FETCH h.departments d JOIN FETCH d.units u"

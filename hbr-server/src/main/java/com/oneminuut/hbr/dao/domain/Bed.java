@@ -41,8 +41,6 @@ public class Bed implements Serializable {
 	@Column(name = "deleted", nullable = false, columnDefinition = "tinyint default false")
 	private Boolean deleted = false;
 
-	@Column(name = "available", nullable = false, columnDefinition = "tinyint default true")
-	private Boolean available = true;
 
 	@OneToMany(mappedBy = "bed")
 	private Set<BedReservation> reservations;
@@ -101,14 +99,6 @@ public class Bed implements Serializable {
 
 	public void setUpdated(Date updated) {
 		this.updated = updated;
-	}
-
-	public Boolean getAvailable() {
-		return available;
-	}
-
-	public void setAvailable(Boolean available) {
-		this.available = available;
 	}
 
 }
