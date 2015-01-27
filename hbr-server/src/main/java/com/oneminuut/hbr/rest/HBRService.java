@@ -132,7 +132,7 @@ public class HBRService {
 				}
 
 				if (bedReservationDTO.getRequestType().equals(
-						RESERVATION__REQUEST_TYPE.NEW_RESERVATION)) {
+						RESERVATION__REQUEST_TYPE.NEW_RESERVATION.toString())) {
 					BedReservation bedReservation = hospitalService
 							.getBedReservationForDate(
 									bedReservationDTO.getBedId(), endDate,
@@ -160,7 +160,7 @@ public class HBRService {
 					}
 
 				} else if (bedReservationDTO.getRequestType().equals(
-						RESERVATION__REQUEST_TYPE.MARK_FREE)) {
+						RESERVATION__REQUEST_TYPE.MARK_FREE.toString())) {
 					BedReservation bedReservation = hospitalService
 							.getBedReservationForDate(
 									bedReservationDTO.getBedId(), endDate,
@@ -183,7 +183,7 @@ public class HBRService {
 					}
 
 				} else if (bedReservationDTO.getRequestType().equals(
-						RESERVATION__REQUEST_TYPE.MARK_CLOSED)) {
+						RESERVATION__REQUEST_TYPE.MARK_CLOSED.toString())) {
 					BedReservation bedReservation = hospitalService
 							.getBedReservationForDate(
 									bedReservationDTO.getBedId(), endDate,
@@ -210,7 +210,7 @@ public class HBRService {
 						hbrResponse.setMessage("Reservation Successful");
 					}
 				} else if (bedReservationDTO.getRequestType().equals(
-						RESERVATION__REQUEST_TYPE.REMOVE_CLOSED)) {
+						RESERVATION__REQUEST_TYPE.REMOVE_CLOSED.toString())) {
 					BedReservation bedReservation = hospitalService
 							.getBedReservationForDate(
 									bedReservationDTO.getBedId(), endDate,
@@ -223,6 +223,7 @@ public class HBRService {
 
 					} else {
 						// Make an log entry
+						bedReservation.setEndDate(endDate);
 						bedReservation.setDeleted(true);
 						bedReservation.setUpdated(new Date());
 						hospitalService.saveBedReservation(bedReservation);
@@ -234,6 +235,7 @@ public class HBRService {
 
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.fatal(e.getStackTrace());
 			hbrResponse.setStatusCode("err001");
 			hbrResponse.setMessage(e.getStackTrace().toString());

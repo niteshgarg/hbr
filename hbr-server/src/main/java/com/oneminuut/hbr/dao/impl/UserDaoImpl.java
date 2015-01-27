@@ -14,6 +14,11 @@ import com.oneminuut.hbr.util.HBRUtil;
 public class UserDaoImpl extends GenericDaoImpl<User, Long> implements UserDao {
 
 	private static final Logger logger = Logger.getLogger(UserDaoImpl.class);
+	
+	public UserDaoImpl() {
+		super(User.class);
+	}
+
 
 	@Override
 	public void saveUser(User user) {

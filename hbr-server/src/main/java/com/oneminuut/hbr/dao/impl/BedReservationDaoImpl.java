@@ -43,6 +43,7 @@ public class BedReservationDaoImpl extends GenericDaoImpl<BedReservation, Long>
 			query.setBoolean("deleted", false);
 			bedReservation = (BedReservation) query.uniqueResult();
 		} catch (Exception e) {
+			e.printStackTrace();
 			logger.fatal(HBRUtil.getExceptionDescriptionString(e));
 			throw e;
 		} finally {
