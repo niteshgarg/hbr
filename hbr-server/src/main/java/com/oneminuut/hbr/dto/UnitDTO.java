@@ -9,6 +9,17 @@ public class UnitDTO {
 	private String name;
 
 	private Set<BedDTO> beds;
+	
+	private long unitNumber;
+
+	
+	public long getUnitNumber() {
+		return unitNumber;
+	}
+
+	public void setUnitNumber(long unitNumber) {
+		this.unitNumber = unitNumber;
+	}
 
 	public Set<BedDTO> getBeds() {
 		return beds;

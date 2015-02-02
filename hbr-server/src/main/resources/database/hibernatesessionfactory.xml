@@ -29,6 +29,7 @@
 				<value>com.oneminuut.hbr.dao.domain.Unit</value>
 				<value>com.oneminuut.hbr.dao.domain.Bed</value>
 				<value>com.oneminuut.hbr.dao.domain.BedReservation</value>
+				<value>com.oneminuut.hbr.dao.domain.Specialism</value>
 			</list>
 		</property>
 	</bean>

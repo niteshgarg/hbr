@@ -2,7 +2,7 @@ package com.oneminuut.hbr.service.impl;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -17,11 +17,13 @@ import org.springframework.stereotype.Service;
 import com.oneminuut.hbr.dao.BedDao;
 import com.oneminuut.hbr.dao.BedReservationDao;
 import com.oneminuut.hbr.dao.HospitalDao;
+import com.oneminuut.hbr.dao.SpecialismDao;
 import com.oneminuut.hbr.dao.UserDao;
 import com.oneminuut.hbr.dao.domain.Bed;
 import com.oneminuut.hbr.dao.domain.BedReservation;
 import com.oneminuut.hbr.dao.domain.Department;
 import com.oneminuut.hbr.dao.domain.Hospital;
+import com.oneminuut.hbr.dao.domain.Specialism;
 import com.oneminuut.hbr.dao.domain.Unit;
 import com.oneminuut.hbr.dto.BedDTO;
 import com.oneminuut.hbr.dto.DepartmentDTO;
@@ -34,6 +36,9 @@ public class HospitalServiceImpl implements HospitalService {
 
 	@Autowired
 	private HospitalDao hospitalDao;
+
+	@Autowired
+	private SpecialismDao specialismDao;
 
 	@Autowired
 	private UserDao userDao;
@@ -73,25 +78,30 @@ public class HospitalServiceImpl implements HospitalService {
 
 			Hospital hospital = hospitalDao.getHospital(id);
 			HospitalDTO hospitalDTO = new HospitalDTO();
-			hospitalDTO.setDepartments(new HashSet<DepartmentDTO>());
+			hospitalDTO.setDepartments(new LinkedHashSet<DepartmentDTO>());
 			hospitalDTO.setId(hospital.getId());
 			hospitalDTO.setName(hospital.getName());
 			for (Department department : hospital.getDepartments()) {
 				DepartmentDTO departmentDTO = new DepartmentDTO();
 				hospitalDTO.getDepartments().add(departmentDTO);
 				departmentDTO.setId(department.getId());
+				departmentDTO.setDepartmentNumber(department
+						.getDepartmentNumber());
 				departmentDTO.setName(department.getName());
-				departmentDTO.setUnits(new HashSet<UnitDTO>());
+				departmentDTO.setUnits(new LinkedHashSet<UnitDTO>());
 				for (Unit unit : department.getUnits()) {
 					UnitDTO unitDTO = new UnitDTO();
 					departmentDTO.getUnits().add(unitDTO);
 					unitDTO.setId(unit.getId());
 					unitDTO.setName(unit.getName());
-					unitDTO.setBeds(new HashSet<BedDTO>());
+					unitDTO.setUnitNumber(unit.getUnitNumber());
+					unitDTO.setBeds(new LinkedHashSet<BedDTO>());
 					for (Bed bed : unit.getBeds()) {
 						BedDTO bedDTO = new BedDTO();
 						bedDTO.setId(bed.getId());
 						bedDTO.setNumber(bed.getNumber());
+						bedDTO.setName(bed.getName());
+						bedDTO.setRoomName(bed.getRoomName());
 						unitDTO.getBeds().add(bedDTO);
 					}
 				}
@@ -117,18 +127,28 @@ public class HospitalServiceImpl implements HospitalService {
 	@Autowired
 	private BedReservationDao bedReservationDao;
 
-	public BedReservation getBedReservationForDate(long id, Date enddate, Date startDate) {
-		return bedReservationDao.getBedReservationForDate(id, enddate, startDate);
+	public BedReservation getBedReservationForDate(long id, Date enddate,
+			Date startDate) {
+		return bedReservationDao.getBedReservationForDate(id, enddate,
+				startDate);
 	}
 
-	
 	public void saveBedReservation(BedReservation bedReservation) {
 		bedReservationDao.save(bedReservation);
 	}
-	
+
 	public Bed getBed(long bedId) {
 		return bedDao.get(bedId);
 	}
+
+	public List<Specialism> getSpecialismForHospital(long id) {
+		return specialismDao.getSpecialismForHospital(id);
+	}
+
+	public Specialism getSpecialism(long id) {
+		return specialismDao.get(id);
+	}
+
 	/*
 	 * @Override public Lesson saveLesson(AddLessonForm addLessonForm, String
 	 * email) { Lesson lesson = new Lesson();

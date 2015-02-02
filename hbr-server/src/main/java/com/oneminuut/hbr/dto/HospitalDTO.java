@@ -1,6 +1,6 @@
 package com.oneminuut.hbr.dto;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 
@@ -10,7 +10,7 @@ public class HospitalDTO {
 
 	private String name;
 
-	private Set<DepartmentDTO> departments = new HashSet<>();
+	private Set<DepartmentDTO> departments = new LinkedHashSet<>();
 	
 	public Set<DepartmentDTO> getDepartments() {
 		return departments;

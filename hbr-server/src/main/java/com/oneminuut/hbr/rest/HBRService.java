@@ -2,6 +2,7 @@ package com.oneminuut.hbr.rest;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -24,12 +25,14 @@ import com.oneminuut.hbr.dao.domain.BED_STATUS;
 import com.oneminuut.hbr.dao.domain.BedReservation;
 import com.oneminuut.hbr.dao.domain.RESERVATION_STATUS_TYPE;
 import com.oneminuut.hbr.dao.domain.RESERVATION__REQUEST_TYPE;
+import com.oneminuut.hbr.dao.domain.Specialism;
 import com.oneminuut.hbr.dao.domain.User;
 import com.oneminuut.hbr.dto.BedDTO;
 import com.oneminuut.hbr.dto.BedReservationDTO;
 import com.oneminuut.hbr.dto.DepartmentDTO;
 import com.oneminuut.hbr.dto.HBRResponse;
 import com.oneminuut.hbr.dto.HospitalDTO;
+import com.oneminuut.hbr.dto.SpecialismDTO;
 import com.oneminuut.hbr.dto.UnitDTO;
 import com.oneminuut.hbr.dto.UserAuthenticationDTO;
 import com.oneminuut.hbr.dto.UserValidationDTO;
@@ -110,7 +113,7 @@ public class HBRService {
 			if (null == user) {
 
 				hbrResponse.setStatusCode("ERROR_007");
-				hbrResponse.setMessage("User Not Found Unsuccessful");
+				hbrResponse.setMessage("User Not Found");
 
 			} else {
 
@@ -141,7 +144,7 @@ public class HBRService {
 					if (null != bedReservation) {
 						hbrResponse.setStatusCode("ERROR_008");
 						hbrResponse
-								.setMessage("Reservation Unsuccessful : Bed Not Free within this date range");
+								.setMessage("Bed is not free within this date range");
 
 					} else {
 						bedReservation = new BedReservation();
@@ -152,11 +155,23 @@ public class HBRService {
 						bedReservation.setStartDate(startDate);
 						bedReservation.setBed(hospitalService
 								.getBed(bedReservationDTO.getBedId()));
-						bedReservation
-								.setStatus(RESERVATION_STATUS_TYPE.OCCUPIED);
+						if (bedReservationDTO.getEndDate().equals(
+								bedReservationDTO.getStartDate())) { // Booking
+																		// for
+																		// Day
+																		// care
+							bedReservation
+									.setStatus(RESERVATION_STATUS_TYPE.MARKED_FREE);
+						} else {
+							bedReservation
+									.setStatus(RESERVATION_STATUS_TYPE.OCCUPIED);
+						}
+						bedReservation.setSpecialism(hospitalService
+								.getSpecialism(bedReservationDTO
+										.getSpecialismId()));
 						hospitalService.saveBedReservation(bedReservation);
 						hbrResponse.setStatusCode("SUCCESS_008");
-						hbrResponse.setMessage("Reservation Successful");
+						hbrResponse.setMessage("Bed marked as occupied");
 					}
 
 				} else if (bedReservationDTO.getRequestType().equals(
@@ -169,7 +184,7 @@ public class HBRService {
 					if (null == bedReservation) {
 						hbrResponse.setStatusCode("ERROR_009");
 						hbrResponse
-								.setMessage("No Reservation Present For This Date");
+								.setMessage("Bed is not occupied for this date");
 
 					} else {
 						// Make an log entry
@@ -179,7 +194,7 @@ public class HBRService {
 								.setStatus(RESERVATION_STATUS_TYPE.MARKED_FREE);
 						hospitalService.saveBedReservation(bedReservation);
 						hbrResponse.setStatusCode("SUCCESS_008");
-						hbrResponse.setMessage("Status Change Request Successful");
+						hbrResponse.setMessage("Bed marked free");
 					}
 
 				} else if (bedReservationDTO.getRequestType().equals(
@@ -192,7 +207,7 @@ public class HBRService {
 					if (null != bedReservation) {
 						hbrResponse.setStatusCode("ERROR_009");
 						hbrResponse
-								.setMessage("Bed Already Reserved For This Date Range");
+								.setMessage("Bed occupied for this date range");
 
 					} else {
 						bedReservation = new BedReservation();
@@ -207,7 +222,7 @@ public class HBRService {
 								.setStatus(RESERVATION_STATUS_TYPE.CLOSED);
 						hospitalService.saveBedReservation(bedReservation);
 						hbrResponse.setStatusCode("SUCCESS_008");
-						hbrResponse.setMessage("Reservation Successful");
+						hbrResponse.setMessage("Bed marked as closed");
 					}
 				} else if (bedReservationDTO.getRequestType().equals(
 						RESERVATION__REQUEST_TYPE.REMOVE_CLOSED.toString())) {
@@ -228,7 +243,8 @@ public class HBRService {
 						bedReservation.setUpdated(new Date());
 						hospitalService.saveBedReservation(bedReservation);
 						hbrResponse.setStatusCode("SUCCESS_008");
-						hbrResponse.setMessage("Status Change Request Successful");
+						hbrResponse
+								.setMessage("Bed marked as ready for occupation");
 					}
 
 				}
@@ -242,6 +258,28 @@ public class HBRService {
 			return Response.status(500).entity(hbrResponse).build();
 		}
 		return Response.status(200).entity(hbrResponse).build();
+	}
+
+	@Path("/get-specialisms")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getSpecialisms(@QueryParam("hospitalId") long hospitalId) {
+		HospitalService hospitalService = (HospitalService) appContext
+				.getBean("hospitalService");
+		List<Specialism> specialisms = hospitalService
+				.getSpecialismForHospital(hospitalId);
+
+		List<SpecialismDTO> specialismsDTO = new ArrayList<>();
+
+		for (Specialism specialism : specialisms) {
+			SpecialismDTO specialismDTO = new SpecialismDTO();
+			specialismsDTO.add(specialismDTO);
+			specialismDTO.setId(specialism.getId());
+			specialismDTO.setName(specialism.getName());
+		}
+
+		return Response.status(200).entity(specialismsDTO).build();
+
 	}
 
 	@Path("/get-hospital-details")
@@ -270,6 +308,12 @@ public class HBRService {
 
 		BED_STATUS statusYesterday = null;
 
+		Specialism specialism = null;
+
+		Date startDate = null;
+
+		Date endDate = null;
+
 		Calendar c = Calendar.getInstance();
 		c.setTime(date);
 		c.add(Calendar.DATE, -1);
@@ -295,10 +339,15 @@ public class HBRService {
 
 						if (date.equals(bedReservation.getEndDate())) {
 							statusDate = BED_STATUS.ORANGE;
-
+							specialism = bedReservation.getSpecialism();
+							startDate = bedReservation.getStartDate();
+							endDate = bedReservation.getEndDate();
+							bed.setUserName(bedReservation.getUser()
+									.getFirstName()
+									+ " "
+									+ bedReservation.getUser().getLastName());
 							if (date.equals(bedReservation.getStartDate())) {
 								statusDate = BED_STATUS.BLUE; // Today for day
-																// care.
 							}
 							if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
 								statusDate = BED_STATUS.GRAY;
@@ -307,7 +356,13 @@ public class HBRService {
 
 						if (date.equals(bedReservation.getStartDate())) {
 							statusDate = BED_STATUS.PINK;
-
+							startDate = bedReservation.getStartDate();
+							endDate = bedReservation.getEndDate();
+							specialism = bedReservation.getSpecialism();
+							bed.setUserName(bedReservation.getUser()
+									.getFirstName()
+									+ " "
+									+ bedReservation.getUser().getLastName());
 							if (date.equals(bedReservation.getEndDate())) {
 								statusDate = BED_STATUS.BLUE; // Today for day
 																// care.
@@ -335,6 +390,15 @@ public class HBRService {
 
 						if (date.after(bedReservation.getStartDate())) {
 							if (date.before(bedReservation.getEndDate())) {
+								startDate = bedReservation.getStartDate();
+								endDate = bedReservation.getEndDate();
+								specialism = bedReservation.getSpecialism();
+
+								bed.setUserName(bedReservation.getUser()
+										.getFirstName()
+										+ " "
+										+ bedReservation.getUser()
+												.getLastName());
 								statusDate = BED_STATUS.PINK;
 
 								if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
@@ -342,6 +406,15 @@ public class HBRService {
 								}
 							}
 							if (date.equals(bedReservation.getEndDate())) {
+								startDate = bedReservation.getStartDate();
+								endDate = bedReservation.getEndDate();
+
+								bed.setUserName(bedReservation.getUser()
+										.getFirstName()
+										+ " "
+										+ bedReservation.getUser()
+												.getLastName());
+								specialism = bedReservation.getSpecialism();
 								statusDate = BED_STATUS.ORANGE;
 								if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
 									statusDate = BED_STATUS.GRAY;
@@ -351,8 +424,20 @@ public class HBRService {
 
 					}
 					bed.setStatus(statusDate.getStatus());
+					if (null != specialism) {
+						bed.setSpecialism(specialism.getName());
+					}
 					if (null != statusYesterday) {
 						bed.setYesterdayStatus(statusYesterday.getStatus());
+					}
+
+					if (null != startDate) {
+						bed.setReservationStartDate(startDate.toString());
+					}
+
+					if (null != endDate) {
+						bed.setReservationEndDate(endDate.toString());
+
 					}
 				}
 			}

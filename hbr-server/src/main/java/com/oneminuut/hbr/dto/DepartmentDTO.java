@@ -10,6 +10,16 @@ public class DepartmentDTO {
 
 	private Set<UnitDTO> units;
 
+	private long departmentNumber;
+
+	public long getDepartmentNumber() {
+		return departmentNumber;
+	}
+
+	public void setDepartmentNumber(long departmentNumber) {
+		this.departmentNumber = departmentNumber;
+	}
+
 	public Set<UnitDTO> getUnits() {
 		return units;
 	}

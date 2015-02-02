@@ -44,6 +44,28 @@ public class Bed implements Serializable {
 
 	@OneToMany(mappedBy = "bed")
 	private Set<BedReservation> reservations;
+	
+	@Column(name = "name", nullable = false, length = 30)
+	private String name;
+	
+	@Column(name = "room_name", length = 30)
+	private String roomName;
+	
+	public String getRoomName() {
+		return roomName;
+	}
+
+	public void setRoomName(String roomName) {
+		this.roomName = roomName;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 
 	public Set<BedReservation> getReservations() {
 		return reservations;

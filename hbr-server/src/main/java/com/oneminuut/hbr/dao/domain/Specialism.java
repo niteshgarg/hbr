@@ -2,21 +2,19 @@ package com.oneminuut.hbr.dao.domain;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "hospital")
-public class Hospital implements Serializable {
+@Table(name = "specialism")
+public class Specialism implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -25,8 +23,12 @@ public class Hospital implements Serializable {
 	@Column(name = "id")
 	private long id;
 
-	@Column(name = "name", nullable = false, length = 200)
+	@Column(name = "name", nullable = false, length = 50)
 	private String name;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "hospital_id")
+	private Hospital hospital;
 
 	@Column(name = "created")
 	private Date created;
@@ -36,18 +38,6 @@ public class Hospital implements Serializable {
 
 	@Column(name = "deleted", nullable = false, columnDefinition = "tinyint default false")
 	private Boolean deleted = false;
-	
-	@OneToMany(mappedBy="hospital")
-	@OrderBy("id ASC")
-	private Set<Department> departments = new HashSet<>();
-	
-	public Set<Department> getDepartments() {
-		return departments;
-	}
-
-	public void setDepartments(Set<Department> departments) {
-		this.departments = departments;
-	}
 
 	public Boolean getDeleted() {
 		return deleted;
@@ -89,6 +79,12 @@ public class Hospital implements Serializable {
 		this.updated = updated;
 	}
 
-	
+	public Hospital getHospital() {
+		return hospital;
+	}
+
+	public void setHospital(Hospital hospital) {
+		this.hospital = hospital;
+	}
 
 }

@@ -14,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 @Entity
@@ -33,6 +34,9 @@ public class Unit implements Serializable {
 
 	@Column(name = "name", nullable = false, length = 120)
 	private String name;
+	
+	@Column(name = "unit_number", nullable = false)
+	private long unitNumber;
 
 	@Column(name = "created")
 	private Date created;
@@ -44,8 +48,17 @@ public class Unit implements Serializable {
 	private Boolean deleted = false;
 	
 	@OneToMany(mappedBy="unit")
+	@OrderBy("id ASC")
 	private Set<Bed> beds = new HashSet<>();
 	
+	public long getUnitNumber() {
+		return unitNumber;
+	}
+
+	public void setUnitNumber(long unitNumber) {
+		this.unitNumber = unitNumber;
+	}
+
 	public Set<Bed> getBeds() {
 		return beds;
 	}

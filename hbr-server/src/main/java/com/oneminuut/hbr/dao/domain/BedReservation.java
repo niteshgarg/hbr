@@ -51,7 +51,19 @@ public class BedReservation implements Serializable {
 	@Enumerated(EnumType.ORDINAL)
 	@Column(name = "status", nullable = false)
 	private RESERVATION_STATUS_TYPE status = RESERVATION_STATUS_TYPE.OCCUPIED;
+
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "specialism_id")
+	private Specialism specialism = null;
 	
+	public Specialism getSpecialism() {
+		return specialism;
+	}
+
+	public void setSpecialism(Specialism specialism) {
+		this.specialism = specialism;
+	}
+
 	public RESERVATION_STATUS_TYPE getStatus() {
 		return status;
 	}

@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 @Entity
@@ -43,8 +44,20 @@ public class Department implements Serializable {
 	private Boolean deleted = false;
 	
 	@OneToMany(mappedBy="department")
+	@OrderBy("id ASC")
 	private Set<Unit> units;
 	
+	@Column(name = "department_number", nullable = false)
+	private long departmentNumber;
+	
+	public long getDepartmentNumber() {
+		return departmentNumber;
+	}
+
+	public void setDepartmentNumber(long departmentNumber) {
+		this.departmentNumber = departmentNumber;
+	}
+
 	public Set<Unit> getUnits() {
 		return units;
 	}

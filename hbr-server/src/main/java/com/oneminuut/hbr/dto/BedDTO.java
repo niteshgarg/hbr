@@ -10,6 +10,67 @@ public class BedDTO {
 
 	private String yesterdayStatus;
 
+	private String name;
+
+	private String reservationStartDate;
+
+	private String reservationEndDate;
+	
+	private String specialism;
+	
+	private String userName;
+	
+	private String roomName;
+	
+		
+	public String getRoomName() {
+		return roomName;
+	}
+
+	public void setRoomName(String roomName) {
+		this.roomName = roomName;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public String getSpecialism() {
+		return specialism;
+	}
+
+	public void setSpecialism(String specialism) {
+		this.specialism = specialism;
+	}
+
+	public String getReservationStartDate() {
+		return reservationStartDate;
+	}
+
+	public void setReservationStartDate(String reservationStartDate) {
+		this.reservationStartDate = reservationStartDate;
+	}
+
+	public String getReservationEndDate() {
+		return reservationEndDate;
+	}
+
+	public void setReservationEndDate(String reservationEndDate) {
+		this.reservationEndDate = reservationEndDate;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public String getYesterdayStatus() {
 		return yesterdayStatus;
 	}

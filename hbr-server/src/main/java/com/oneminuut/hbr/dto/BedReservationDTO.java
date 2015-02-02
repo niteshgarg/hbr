@@ -10,6 +10,16 @@ public class BedReservationDTO {
 
 	private String requestType;
 	
+	private long specialismId;
+	
+	public long getSpecialismId() {
+		return specialismId;
+	}
+
+	public void setSpecialismId(long specialismId) {
+		this.specialismId = specialismId;
+	}
+
 	public String getRequestType() {
 		return requestType;
 	}
