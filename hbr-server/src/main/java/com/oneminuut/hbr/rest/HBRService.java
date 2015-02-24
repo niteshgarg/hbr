@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Set;
 
@@ -79,6 +80,9 @@ public class HBRService {
 								userAuthDTO.getPassword())) {
 					hbrResponse.setStatusCode("SUCCESS_003");
 					hbrResponse.setMessage("User Login Successful");
+					hbrResponse.setHospitalId(existingUser.getHospital()
+							.getId());
+					hbrResponse.setUserId(existingUser.getUserId());
 
 				} else {
 					hbrResponse.setStatusCode("ERROR_007");
@@ -141,6 +145,45 @@ public class HBRService {
 									bedReservationDTO.getBedId(), endDate,
 									startDate);
 
+					boolean isReservationPossible = true;
+
+					if (null != bedReservation
+							&& !bedReservation.getStatus().equals(
+									RESERVATION_STATUS_TYPE.MARKED_FREE)) {
+						hbrResponse.setStatusCode("ERROR_008");
+						hbrResponse
+								.setMessage("Bed is not free within this date range");
+						isReservationPossible = false;
+
+					}
+					if (isReservationPossible) {
+						bedReservation = new BedReservation();
+						bedReservation.setCreated(new Date());
+						bedReservation.setUser(user);
+						bedReservation.setUpdated(new Date());
+						bedReservation.setEndDate(endDate);
+						bedReservation.setStartDate(startDate);
+						bedReservation.setBed(hospitalService
+								.getBed(bedReservationDTO.getBedId()));
+
+						bedReservation
+								.setStatus(RESERVATION_STATUS_TYPE.OCCUPIED);
+
+						bedReservation.setSpecialism(hospitalService
+								.getSpecialism(bedReservationDTO
+										.getSpecialismId()));
+						hospitalService.saveBedReservation(bedReservation);
+						hbrResponse.setStatusCode("SUCCESS_008");
+						hbrResponse.setMessage("Bed marked as occupied");
+					}
+
+				} else if (bedReservationDTO.getRequestType().equals(
+						RESERVATION__REQUEST_TYPE.DAY_CARE.toString())) {
+					BedReservation bedReservation = hospitalService
+							.getBedReservationForDate(
+									bedReservationDTO.getBedId(), endDate,
+									startDate);
+
 					if (null != bedReservation) {
 						hbrResponse.setStatusCode("ERROR_008");
 						hbrResponse
@@ -155,17 +198,10 @@ public class HBRService {
 						bedReservation.setStartDate(startDate);
 						bedReservation.setBed(hospitalService
 								.getBed(bedReservationDTO.getBedId()));
-						if (bedReservationDTO.getEndDate().equals(
-								bedReservationDTO.getStartDate())) { // Booking
-																		// for
-																		// Day
-																		// care
-							bedReservation
-									.setStatus(RESERVATION_STATUS_TYPE.MARKED_FREE);
-						} else {
-							bedReservation
-									.setStatus(RESERVATION_STATUS_TYPE.OCCUPIED);
-						}
+
+						bedReservation
+								.setStatus(RESERVATION_STATUS_TYPE.DAY_CARE);
+
 						bedReservation.setSpecialism(hospitalService
 								.getSpecialism(bedReservationDTO
 										.getSpecialismId()));
@@ -176,25 +212,46 @@ public class HBRService {
 
 				} else if (bedReservationDTO.getRequestType().equals(
 						RESERVATION__REQUEST_TYPE.MARK_FREE.toString())) {
-					BedReservation bedReservation = hospitalService
-							.getBedReservationForDate(
-									bedReservationDTO.getBedId(), endDate,
-									startDate);
+					BedReservation bedReservation = null;
 
-					if (null == bedReservation) {
-						hbrResponse.setStatusCode("ERROR_009");
-						hbrResponse
-								.setMessage("Bed is not occupied for this date");
+					if (0 != bedReservationDTO.getYesterdayReservationId()) {
+						bedReservation = hospitalService
+								.getBedReservation(bedReservationDTO
+										.getYesterdayReservationId());
+						if (null == bedReservation) {
+							hbrResponse.setStatusCode("ERROR_009");
+							hbrResponse
+									.setMessage("Bed is not occupied for this date");
 
+						} else {
+							// Make an log entry
+							bedReservation.setUpdated(new Date());
+							bedReservation
+									.setStatus(RESERVATION_STATUS_TYPE.MARKED_FREE);
+							hospitalService.saveBedReservation(bedReservation);
+							hbrResponse.setStatusCode("SUCCESS_008");
+							hbrResponse.setMessage("Bed marked free");
+						}
 					} else {
-						// Make an log entry
-						bedReservation.setUpdated(new Date());
-						bedReservation.setEndDate(endDate);
-						bedReservation
-								.setStatus(RESERVATION_STATUS_TYPE.MARKED_FREE);
-						hospitalService.saveBedReservation(bedReservation);
-						hbrResponse.setStatusCode("SUCCESS_008");
-						hbrResponse.setMessage("Bed marked free");
+						bedReservation = hospitalService
+								.getBedReservationForDate(
+										bedReservationDTO.getBedId(), endDate,
+										startDate);
+						if (null == bedReservation) {
+							hbrResponse.setStatusCode("ERROR_009");
+							hbrResponse
+									.setMessage("Bed is not occupied for this date");
+
+						} else {
+							// Make an log entry
+							bedReservation.setUpdated(new Date());
+							bedReservation.setEndDate(endDate);
+							bedReservation
+									.setStatus(RESERVATION_STATUS_TYPE.MARKED_FREE);
+							hospitalService.saveBedReservation(bedReservation);
+							hbrResponse.setStatusCode("SUCCESS_008");
+							hbrResponse.setMessage("Bed marked free");
+						}
 					}
 
 				} else if (bedReservationDTO.getRequestType().equals(
@@ -239,9 +296,11 @@ public class HBRService {
 					} else {
 						// Make an log entry
 						bedReservation.setEndDate(endDate);
-						bedReservation.setDeleted(true);
+						// bedReservation.setDeleted(true);
 						bedReservation.setUpdated(new Date());
 						hospitalService.saveBedReservation(bedReservation);
+						bedReservation
+								.setStatus(RESERVATION_STATUS_TYPE.MARKED_CLOSED_FREE);
 						hbrResponse.setStatusCode("SUCCESS_008");
 						hbrResponse
 								.setMessage("Bed marked as ready for occupation");
@@ -304,9 +363,68 @@ public class HBRService {
 			e.printStackTrace();
 		}
 
+		for (DepartmentDTO departmentDTO : hospitaldto.getDepartments()) {
+			for (UnitDTO unitDTO : departmentDTO.getUnits()) {
+				getUnitStatus(unitDTO, date);
+
+			}
+		}
+
+		return Response.status(200).entity(hospitaldto).build();
+	}
+
+	@Path("/get-unit-details")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getUnitDetails(@QueryParam("hospitalId") long hospitalId,
+			@QueryParam("unitId") long unitId,
+			@QueryParam("date") String dateString) {
+		HospitalService hospitalService = (HospitalService) appContext
+				.getBean("hospitalService");
+		HospitalDTO hospitaldto = hospitalService.getHospital(hospitalId);
+
+		// Create date using date passed in
+		Date date = new Date();
+
+		SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+		try {
+			date = sdf.parse(dateString);
+			System.out.println("Date is" + date.toString());
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		UnitDTO unit = null;
+
+		for (DepartmentDTO departmentDTO : hospitaldto.getDepartments()) {
+			for (UnitDTO unitDTO : departmentDTO.getUnits()) {
+				if (unitDTO.getId() == unitId) {
+					unit = getUnitStatus(unitDTO, date);
+
+				}
+			}
+		}
+
+		return Response.status(200).entity(unit).build();
+	}
+
+	private UnitDTO getUnitStatus(UnitDTO unitDTO, Date date) {
+
+		HospitalService hospitalService = (HospitalService) appContext
+				.getBean("hospitalService");
+
 		BED_STATUS statusDate = null;
 
 		BED_STATUS statusYesterday = null;
+
+		Specialism specialismYesterday = null;
+
+		Date startDateYesterday = null;
+
+		Date endDateYesterday = null;
+
+		String userNameYesterday = null;
 
 		Specialism specialism = null;
 
@@ -319,131 +437,216 @@ public class HBRService {
 		c.add(Calendar.DATE, -1);
 		Date yesterdayDate = c.getTime();
 
-		for (DepartmentDTO departmentDTO : hospitaldto.getDepartments()) {
-			for (UnitDTO unitDTO : departmentDTO.getUnits()) {
-				Set<BedDTO> beds = unitDTO.getBeds();
-				for (BedDTO bed : beds) {
-					// TODO : Correct the logic for getting bed status
-					List<BedReservation> reservations = hospitalService
-							.getReservationsForBed(bed.getId(), date);
+		Set<BedDTO> beds = unitDTO.getBeds();
+		for (BedDTO bed : beds) {
+			// TODO : Correct the logic for getting bed status
+			List<BedReservation> reservations = hospitalService
+					.getReservationsForBed(bed.getId(), date);
 
-					statusDate = BED_STATUS.GREEN;
-					if (null == reservations || reservations.size() == 0) {
-						bed.setStatus(statusDate.getStatus());
-						continue;
-					}
+			statusDate = BED_STATUS.GREEN;
+			if (null == reservations || reservations.size() == 0) {
+				bed.setStatus(statusDate.getStatus());
+				continue;
+			}
+			
+			specialismYesterday = null;
+			startDateYesterday = null;
+			endDateYesterday = null;
+			userNameYesterday = null;
+			statusYesterday = null;
+			specialism = null;
+			startDate = null;
+			endDate = null;
 
-					for (BedReservation bedReservation : reservations) {
+			bed.setReservationEndDate(null);
+			bed.setSpecialism(null);
+			bed.setStatus(null);
+			bed.setReservationStartDate(null);
+			bed.setUserName(null);
+			bed.setYesterdayReservationId(0);
+			bed.setYesterdayStatus(null);
+			
+			for (BedReservation bedReservation : reservations) {
 
-						// Check for todays date status
+				// Check for todays date status
 
-						if (date.equals(bedReservation.getEndDate())) {
-							statusDate = BED_STATUS.ORANGE;
-							specialism = bedReservation.getSpecialism();
-							startDate = bedReservation.getStartDate();
-							endDate = bedReservation.getEndDate();
-							bed.setUserName(bedReservation.getUser()
-									.getFirstName()
-									+ " "
-									+ bedReservation.getUser().getLastName());
-							if (date.equals(bedReservation.getStartDate())) {
-								statusDate = BED_STATUS.BLUE; // Today for day
-							}
-							if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
-								statusDate = BED_STATUS.GRAY;
-							}
-						}
-
-						if (date.equals(bedReservation.getStartDate())) {
-							statusDate = BED_STATUS.PINK;
-							startDate = bedReservation.getStartDate();
-							endDate = bedReservation.getEndDate();
-							specialism = bedReservation.getSpecialism();
-							bed.setUserName(bedReservation.getUser()
-									.getFirstName()
-									+ " "
-									+ bedReservation.getUser().getLastName());
-							if (date.equals(bedReservation.getEndDate())) {
-								statusDate = BED_STATUS.BLUE; // Today for day
-																// care.
-							}
-							if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
-								statusDate = BED_STATUS.GRAY;
-							}
-						}
-
-						if (yesterdayDate.equals(bedReservation.getEndDate())) {
-
-							if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.OCCUPIED) {
-								statusYesterday = BED_STATUS.ORANGE_BLINKING; // ORANGE
-																				// Blinking
-							}
-							/*
-							 * // if not updated // already else // GREEN if
-							 * (bedReservation.getStartDate().equals(
-							 * yesterdayDate)) { statusDate = BED_STATUS.GREEN;
-							 * // yesterday was // for // daycare show today as
-							 * // green. }
-							 */
-
-						}
-
-						if (date.after(bedReservation.getStartDate())) {
-							if (date.before(bedReservation.getEndDate())) {
-								startDate = bedReservation.getStartDate();
-								endDate = bedReservation.getEndDate();
-								specialism = bedReservation.getSpecialism();
-
-								bed.setUserName(bedReservation.getUser()
-										.getFirstName()
-										+ " "
-										+ bedReservation.getUser()
-												.getLastName());
-								statusDate = BED_STATUS.PINK;
-
-								if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
-									statusDate = BED_STATUS.GRAY;
-								}
-							}
-							if (date.equals(bedReservation.getEndDate())) {
-								startDate = bedReservation.getStartDate();
-								endDate = bedReservation.getEndDate();
-
-								bed.setUserName(bedReservation.getUser()
-										.getFirstName()
-										+ " "
-										+ bedReservation.getUser()
-												.getLastName());
-								specialism = bedReservation.getSpecialism();
-								statusDate = BED_STATUS.ORANGE;
-								if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
-									statusDate = BED_STATUS.GRAY;
-								}
-							}
-						}
-
-					}
-					bed.setStatus(statusDate.getStatus());
-					if (null != specialism) {
-						bed.setSpecialism(specialism.getName());
-					}
-					if (null != statusYesterday) {
-						bed.setYesterdayStatus(statusYesterday.getStatus());
-					}
-
-					if (null != startDate) {
-						bed.setReservationStartDate(startDate.toString());
-					}
-
-					if (null != endDate) {
-						bed.setReservationEndDate(endDate.toString());
-
+				if (date.equals(bedReservation.getStartDate())) {
+					statusDate = BED_STATUS.PINK;
+					startDate = bedReservation.getStartDate();
+					endDate = bedReservation.getEndDate();
+					specialism = bedReservation.getSpecialism();
+					bed.setUserName(bedReservation.getUser().getFirstName()
+							+ " " + bedReservation.getUser().getLastName());
+					if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.DAY_CARE) {
+						statusDate = BED_STATUS.BLUE; // Today for day
+														// care.
+					} else if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
+						statusDate = BED_STATUS.GRAY;
 					}
 				}
-			}
-		}
 
-		return Response.status(200).entity(hospitaldto).build();
+				if (date.equals(bedReservation.getEndDate())) {
+					statusDate = BED_STATUS.ORANGE;
+					specialism = bedReservation.getSpecialism();
+					startDate = bedReservation.getStartDate();
+					endDate = bedReservation.getEndDate();
+					bed.setUserName(bedReservation.getUser().getFirstName()
+							+ " " + bedReservation.getUser().getLastName());
+					if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.DAY_CARE) {
+						statusDate = BED_STATUS.BLUE; // Today for day
+					} else if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
+						statusDate = BED_STATUS.GRAY;
+					} else if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.MARKED_FREE
+							|| bedReservation.getStatus() == RESERVATION_STATUS_TYPE.MARKED_CLOSED_FREE) {
+						statusDate = BED_STATUS.GREEN;
+					}
+				}
+
+				if (yesterdayDate.equals(bedReservation.getEndDate())) {
+
+					if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.OCCUPIED
+							|| bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
+						statusYesterday = BED_STATUS.ORANGE_BLINKING; // ORANGE
+																		// Blinking
+						bed.setYesterdayReservationId(bedReservation.getId());
+						startDateYesterday = bedReservation.getStartDate();
+						endDateYesterday = bedReservation.getEndDate();
+						userNameYesterday = bedReservation.getUser()
+								.getFirstName()
+								+ " "
+								+ bedReservation.getUser().getLastName();
+						specialismYesterday = bedReservation.getSpecialism();
+
+					}
+					/*
+					 * // if not updated // already else // GREEN if
+					 * (bedReservation.getStartDate().equals( yesterdayDate)) {
+					 * statusDate = BED_STATUS.GREEN; // yesterday was // for //
+					 * daycare show today as // green. }
+					 */
+
+				}
+
+				if (date.after(bedReservation.getStartDate())) {
+					if (date.before(bedReservation.getEndDate())) {
+						startDate = bedReservation.getStartDate();
+						endDate = bedReservation.getEndDate();
+						specialism = bedReservation.getSpecialism();
+
+						bed.setUserName(bedReservation.getUser().getFirstName()
+								+ " " + bedReservation.getUser().getLastName());
+						statusDate = BED_STATUS.PINK;
+
+						if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED
+								|| bedReservation.getStatus() == RESERVATION_STATUS_TYPE.MARKED_CLOSED_FREE) {
+							statusDate = BED_STATUS.GRAY;
+						}
+						// to handle here
+					}
+					if (date.equals(bedReservation.getEndDate())) {
+						startDate = bedReservation.getStartDate();
+						endDate = bedReservation.getEndDate();
+
+						bed.setUserName(bedReservation.getUser().getFirstName()
+								+ " " + bedReservation.getUser().getLastName());
+						specialism = bedReservation.getSpecialism();
+						statusDate = BED_STATUS.ORANGE;
+						if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.CLOSED) {
+							statusDate = BED_STATUS.GRAY;
+						} else if (bedReservation.getStatus() == RESERVATION_STATUS_TYPE.MARKED_FREE
+								|| bedReservation.getStatus() == RESERVATION_STATUS_TYPE.MARKED_CLOSED_FREE) {
+							statusDate = BED_STATUS.GREEN;
+						}
+					}
+				}
+
+			}
+			bed.setStatus(statusDate.getStatus());
+			if (null != specialism) {
+				bed.setSpecialism(specialism.getName());
+			}
+			if (null != statusYesterday) {
+				bed.setYesterdayStatus(statusYesterday.getStatus());
+			}
+
+			if (null != userNameYesterday) {
+				bed.setUserName(userNameYesterday);
+			}
+			if (null != specialismYesterday) {
+				bed.setSpecialism(specialismYesterday.getName());
+			}
+
+			if (null != startDate) {
+
+				Calendar cal = new GregorianCalendar();
+				cal.setTime(startDate);
+				String month = (cal.get(Calendar.MONTH) + 1) + "";
+				if ((cal.get(Calendar.MONTH) + 1) < 10) {
+					month = "0" + month;
+				}
+				String day = cal.get(Calendar.DAY_OF_MONTH) + "";
+				if (cal.get(Calendar.DAY_OF_MONTH) < 10) {
+					day = "0" + day;
+				}
+
+				bed.setReservationStartDate(day + "-" + month + "-"
+						+ cal.get(Calendar.YEAR));
+			}
+
+			if (null != endDate) {
+				Calendar cal = new GregorianCalendar();
+				cal.setTime(endDate);
+				String month = (cal.get(Calendar.MONTH) + 1) + "";
+				if ((cal.get(Calendar.MONTH) + 1) < 10) {
+					month = "0" + month;
+				}
+				String day = cal.get(Calendar.DAY_OF_MONTH) + "";
+				if (cal.get(Calendar.DAY_OF_MONTH) < 10) {
+					day = "0" + day;
+				}
+
+				bed.setReservationEndDate(day + "-" + month + "-"
+						+ cal.get(Calendar.YEAR));
+
+			}
+
+			if (null != startDateYesterday) {
+
+				Calendar cal = new GregorianCalendar();
+				cal.setTime(startDateYesterday);
+				String month = (cal.get(Calendar.MONTH) + 1) + "";
+				if ((cal.get(Calendar.MONTH) + 1) < 10) {
+					month = "0" + month;
+				}
+				String day = cal.get(Calendar.DAY_OF_MONTH) + "";
+				if (cal.get(Calendar.DAY_OF_MONTH) < 10) {
+					day = "0" + day;
+				}
+
+				bed.setReservationStartDate(day + "-" + month + "-"
+						+ cal.get(Calendar.YEAR));
+			}
+
+			if (null != endDateYesterday) {
+				Calendar cal = new GregorianCalendar();
+				cal.setTime(endDateYesterday);
+				String month = (cal.get(Calendar.MONTH) + 1) + "";
+				if ((cal.get(Calendar.MONTH) + 1) < 10) {
+					month = "0" + month;
+				}
+				String day = cal.get(Calendar.DAY_OF_MONTH) + "";
+				if (cal.get(Calendar.DAY_OF_MONTH) < 10) {
+					day = "0" + day;
+				}
+
+				bed.setReservationEndDate(day + "-" + month + "-"
+						+ cal.get(Calendar.YEAR));
+
+			}
+
+		}
+		return unitDTO;
+
 	}
 
 }

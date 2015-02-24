@@ -9,6 +9,8 @@ public class BedDTO {
 	private String status;
 
 	private String yesterdayStatus;
+	
+	private long yesterdayReservationId;
 
 	private String name;
 
@@ -23,6 +25,14 @@ public class BedDTO {
 	private String roomName;
 	
 		
+	public long getYesterdayReservationId() {
+		return yesterdayReservationId;
+	}
+
+	public void setYesterdayReservationId(long yesterdayReservationId) {
+		this.yesterdayReservationId = yesterdayReservationId;
+	}
+
 	public String getRoomName() {
 		return roomName;
 	}

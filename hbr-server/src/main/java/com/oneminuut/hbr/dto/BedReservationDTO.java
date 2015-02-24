@@ -9,9 +9,19 @@ public class BedReservationDTO {
 	private String endDate;
 
 	private String requestType;
-	
+
 	private long specialismId;
-	
+
+	private long yesterdayReservationId;
+
+	public long getYesterdayReservationId() {
+		return yesterdayReservationId;
+	}
+
+	public void setYesterdayReservationId(long yesterdayReservationId) {
+		this.yesterdayReservationId = yesterdayReservationId;
+	}
+
 	public long getSpecialismId() {
 		return specialismId;
 	}

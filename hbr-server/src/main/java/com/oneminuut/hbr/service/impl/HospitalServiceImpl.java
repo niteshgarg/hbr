@@ -149,6 +149,10 @@ public class HospitalServiceImpl implements HospitalService {
 		return specialismDao.get(id);
 	}
 
+	public BedReservation getBedReservation(long id) {
+		return bedReservationDao.get(id);
+	}
+
 	/*
 	 * @Override public Lesson saveLesson(AddLessonForm addLessonForm, String
 	 * email) { Lesson lesson = new Lesson();

@@ -48,8 +48,14 @@ public class User implements Serializable {
 	@ManyToOne(cascade = CascadeType.ALL)
 	private Role role;
 
-	
-	
+	public Hospital getHospital() {
+		return hospital;
+	}
+
+	public void setHospital(Hospital hospital) {
+		this.hospital = hospital;
+	}
+
 	public Date getUpdated() {
 		return updated;
 	}

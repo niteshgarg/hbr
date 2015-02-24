@@ -29,5 +29,8 @@ public interface HospitalService {
 	public List<Specialism> getSpecialismForHospital(long id);
 
 	public Specialism getSpecialism(long id);
+	
+
+	public BedReservation getBedReservation(long id);	
 
 }
